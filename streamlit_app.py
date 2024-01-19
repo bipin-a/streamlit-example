@@ -1,40 +1,54 @@
-import altair as alt
+import seaborn as sns
 import numpy as np
 import pandas as pd
 import streamlit as st
+import logging
+st.set_page_config(
+        page_title="Hello",
+        page_icon="👋",
+    )
+logger = logging.getLogger(__name__)
 
 """
-# Welcome to Streamlit!
-
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
-
-In the meantime, below is an example of what you can do with just a few lines of code:
+# Products and Markets
 """
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+def load_data(file_name):
+   df = pd.read_csv(file_name)
+   return df
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+def get_stats(df_, index_cols, agg_col):
+  df = df_.copy()
+  agg_df = df.groupby(index_cols).agg(
+      total = (agg_col, np.sum),
+      avg = (agg_col ,np.mean),
+      median = (agg_col ,np.median),
+      std = (agg_col ,np.std),
+  )
+  return agg_df
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
 
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+def run_report():
+   
+   data = get_stats()
+   sales_per_market = get_stats(data, ['UNIQUE_MARKET_ID'], 'PRODUCT_SALES_AMOUNT')
+   sales_per_market = sales_per_market.melt()
+   g = sns.FacetGrid(sales_per_market, col="variable", height=3.5, aspect=.65, sharex=False, sharey=False)
+   g.map(sns.histplot, "value")
+   st.pyplot(g.fig)
+
+
+
+
+def main():
+    df = load_data('dataset_encoded.csv')
+
+if __name__ == '__main__':
+
+
+    logger.info('hi')
+
+    print('hi')
+    
+    main()
